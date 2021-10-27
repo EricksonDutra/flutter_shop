@@ -18,9 +18,6 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = ThemeData(
-      fontFamily: 'Lato',
-    );
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(
@@ -41,6 +38,7 @@ class MyApp extends StatelessWidget {
           update: (ctx, auth, previous) {
             return OrderList(
               auth.token ?? '',
+              auth.userId ?? '',
               previous?.items ?? [],
             );
           },
