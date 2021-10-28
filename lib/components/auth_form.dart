@@ -12,7 +12,8 @@ class AuthForm extends StatefulWidget {
   _AuthFormState createState() => _AuthFormState();
 }
 
-class _AuthFormState extends State<AuthForm> {
+class _AuthFormState extends State<AuthForm>
+    with SingleTickerProviderStateMixin {
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
@@ -22,15 +23,49 @@ class _AuthFormState extends State<AuthForm> {
     'password': '',
   };
 
+  AnimationController? _controller;
+  Animation<Size>? _heightAnimation;
+
   bool _isLogin() => _authMode == AuthMode.Login;
   bool _isSignup() => _authMode == AuthMode.Signup;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: Duration(
+        milliseconds: 270,
+      ),
+    );
+
+    _heightAnimation = Tween(
+      begin: Size(double.infinity, 310),
+      end: Size(double.infinity, 400),
+    ).animate(
+      CurvedAnimation(
+        parent: _controller!,
+        curve: Curves.linear,
+      ),
+    );
+
+    //_heightAnimation?.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _controller?.dispose();
+  }
 
   void _switchAuthMode() {
     setState(() {
       if (_isLogin()) {
         _authMode = AuthMode.Signup;
+        _controller?.forward();
       } else {
         _authMode = AuthMode.Login;
+        _controller?.reverse();
       }
     });
   }
@@ -94,82 +129,86 @@ class _AuthFormState extends State<AuthForm> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
       ),
-      child: Container(
+      child: AnimatedContainer(
+        duration: Duration(milliseconds: 300),
+        curve: Curves.easeIn,
         padding: const EdgeInsets.all(16),
         height: _isLogin() ? 310 : 400,
+        //height: _heightAnimation?.value.height ?? (_isLogin() ? 310 : 400),
         width: deviceSize.width * 0.75,
         child: Form(
-            key: _formKey,
-            child: Column(
-              children: [
+          key: _formKey,
+          child: Column(
+            children: [
+              TextFormField(
+                decoration: InputDecoration(labelText: 'E-mail'),
+                keyboardType: TextInputType.emailAddress,
+                onSaved: (email) => _authData['email'] = email ?? '',
+                validator: (_email) {
+                  final email = _email ?? '';
+                  if (email.trim().isEmpty || !email.contains('@')) {
+                    return 'Informe um e-mail válido!';
+                  }
+                  return null;
+                },
+              ),
+              TextFormField(
+                decoration: InputDecoration(labelText: 'Senha'),
+                // keyboardType: TextInputType.visiblePassword,
+                obscureText: true,
+                onSaved: (password) => _authData['password'] = password ?? '',
+                controller: _passwordController,
+                validator: (_password) {
+                  final password = _password ?? '';
+                  if (password.isEmpty || password.length < 5) {
+                    return 'Informe uma senha válida';
+                  }
+                  return null;
+                },
+              ),
+              if (_isSignup())
                 TextFormField(
-                  decoration: InputDecoration(labelText: 'E-mail'),
-                  keyboardType: TextInputType.emailAddress,
-                  onSaved: (email) => _authData['email'] = email ?? '',
-                  validator: (_email) {
-                    final email = _email ?? '';
-                    if (email.trim().isEmpty || !email.contains('@')) {
-                      return 'Informe um e-mail válido!';
-                    }
-                    return null;
-                  },
-                ),
-                TextFormField(
-                  decoration: InputDecoration(labelText: 'Senha'),
+                  decoration: InputDecoration(labelText: 'Confirmar senha'),
                   // keyboardType: TextInputType.visiblePassword,
                   obscureText: true,
-                  onSaved: (password) => _authData['password'] = password ?? '',
-                  controller: _passwordController,
-                  validator: (_password) {
-                    final password = _password ?? '';
-                    if (password.isEmpty || password.length < 5) {
-                      return 'Informe uma senha válida';
-                    }
-                    return null;
-                  },
+                  validator: _isLogin()
+                      ? null
+                      : (_password) {
+                          final password = _password ?? '';
+                          if (password != _passwordController.text) {
+                            return 'Senhas informadas não conferem';
+                          }
+                          return null;
+                        },
                 ),
-                if (_isSignup())
-                  TextFormField(
-                    decoration: InputDecoration(labelText: 'Confirmar senha'),
-                    // keyboardType: TextInputType.visiblePassword,
-                    obscureText: true,
-                    validator: _isLogin()
-                        ? null
-                        : (_password) {
-                            final password = _password ?? '';
-                            if (password != _passwordController.text) {
-                              return 'Senhas informadas não conferem';
-                            }
-                            return null;
-                          },
-                  ),
-                SizedBox(height: 20),
-                if (_isLoading)
-                  CircularProgressIndicator()
-                else
-                  ElevatedButton(
-                    onPressed: _submit,
-                    child: Text(
-                      _authMode == AuthMode.Login ? 'ENTRAR' : 'REGISTRAR',
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 30,
-                        vertical: 8,
-                      ),
-                    ),
-                  ),
-                Spacer(),
-                TextButton(
-                  onPressed: _switchAuthMode,
+              SizedBox(height: 20),
+              if (_isLoading)
+                CircularProgressIndicator()
+              else
+                ElevatedButton(
+                  onPressed: _submit,
                   child: Text(
-                      _isLogin() ? 'DESEJA REGISTRAR?' : 'JÁ POSSUI CONTA?'),
-                )
-              ],
-            )),
+                    _authMode == AuthMode.Login ? 'ENTRAR' : 'REGISTRAR',
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 30,
+                      vertical: 8,
+                    ),
+                  ),
+                ),
+              Spacer(),
+              TextButton(
+                onPressed: _switchAuthMode,
+                child:
+                    Text(_isLogin() ? 'DESEJA REGISTRAR?' : 'JÁ POSSUI CONTA?'),
+              )
+            ],
+          ),
+        ),
       ),
     );
   }
