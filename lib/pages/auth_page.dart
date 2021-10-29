@@ -55,12 +55,11 @@ class AuthPage extends StatelessWidget {
                         style: TextStyle(
                             fontSize: 45,
                             fontFamily: 'Anton',
-                            color:
+                            color: Theme.of(context)
                                 // ignore: deprecated_member_use
-                                Theme.of(context)
-                                    .accentTextTheme
-                                    .headline6
-                                    ?.color),
+                                .accentTextTheme
+                                .headline6
+                                ?.color),
                       ),
                     ),
                     AuthForm(),

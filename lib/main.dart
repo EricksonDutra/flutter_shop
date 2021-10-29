@@ -10,6 +10,7 @@ import 'package:shop/pages/orders_page.dart';
 import 'package:shop/pages/product_detail_page.dart';
 import 'package:shop/pages/products_page.dart';
 import 'package:shop/utils/app_routes.dart';
+import 'package:shop/utils/custom_route.dart';
 import 'models/auth.dart';
 
 void main() => runApp(MyApp());
@@ -48,9 +49,13 @@ class MyApp extends StatelessWidget {
         ),
       ],
       child: MaterialApp(
-        title: 'Shop Flutter Demo',
+        title: 'App loja',
         theme: ThemeData(
           fontFamily: 'Lato',
+          pageTransitionsTheme: PageTransitionsTheme(builders: {
+            TargetPlatform.iOS: CustomPageTransitionsBuilder(),
+            TargetPlatform.android: CustomPageTransitionsBuilder(),
+          }),
           colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.purple)
               .copyWith(secondary: Colors.deepOrange),
         ),
